@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Login</title>
+		<style>
+			:root{
+				--bg:#f3f6fb;
+				--card:#ffffff;
+				--accent:#2563eb;
+				--muted:#6b7280;
+				--danger:#ef4444;
+			}
+			*{box-sizing:border-box}
+			html,body{height:100%}
+			body{
+				margin:0;
+				font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+				background:linear-gradient(180deg,var(--bg),#e9eef8);
+				color:#111827;
+				display:flex;
+				align-items:center;
+				justify-content:center;
+				padding:24px;
+			}
+			.container{
+				width:100%;
+				max-width:420px;
+			}
+			.card{
+				background:var(--card);
+				border-radius:12px;
+				padding:28px;
+				box-shadow:0 6px 18px rgba(16,24,40,0.08);
+				border:1px solid rgba(15,23,42,0.03);
+			}
+			h1{margin:0 0 8px;font-size:20px}
+			p.lead{margin:0 0 20px;color:var(--muted);font-size:14px}
+			form{display:grid;gap:12px}
+			label{display:block;font-size:13px;margin-bottom:6px}
+			input[type="email"],input[type="password"]{
+				width:100%;
+				padding:10px 12px;
+				border-radius:8px;
+				border:1px solid #e6eef8;
+				background:#fbfdff;
+				font-size:14px;
+			}
+			.row{display:flex;gap:12px;align-items:center}
+			.remember{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+			.actions{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+			button.btn{
+				background:var(--accent);
+				color:white;
+				border:0;
+				padding:10px 14px;
+				border-radius:8px;
+				cursor:pointer;
+				font-weight:600;
+			}
+			button.secondary{background:transparent;color:var(--accent);border:1px solid rgba(37,99,235,0.12)}
+			.help{font-size:13px;color:var(--muted)}
+			.error{color:var(--danger);font-size:13px;margin-top:6px}
+			.field{display:flex;flex-direction:column}
+			.password-row{display:flex;align-items:center;gap:8px}
+			.toggle-pass{background:transparent;border:0;color:var(--muted);cursor:pointer;padding:6px;border-radius:6px}
+			.hint{font-size:12px;color:var(--muted)}
+			.visually-hidden{position:absolute!important;height:1px;width:1px;overflow:hidden;clip:rect(1px,1px,1px,1px);white-space:nowrap}
+			@media (max-width:420px){
+				.card{padding:20px}
+			}
+			.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:transparent;border-left-color:transparent;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:8px;animation:spin 0.9s linear infinite}
+			@keyframes spin{to{transform:rotate(360deg)}}
+		</style>
+	</head>
+	<body>
+		<main class="container" role="main">
+			<section class="card" aria-labelledby="login-title">
+				<h1 id="login-title">Sign in to your account</h1>
+				<p class="lead">Enter your credentials to access the dashboard.</p>
+
+				<form id="loginForm" novalidate>
+					<div class="field">
+						<label for="email">Email address</label>
+						<input id="email" name="email" type="email" inputmode="email" autocomplete="email" required aria-describedby="emailHelp emailError" placeholder="you@example.com">
+						<div id="emailHelp" class="hint">We'll never share your email.</div>
+						<div id="emailError" class="error" role="alert" aria-live="polite"></div>
+					</div>
+
+					<div class="field">
+						<div class="row" style="justify-content:space-between;">
+							<label for="password">Password</label>
+							<a href="#" class="help" id="forgotLink">Forgot password?</a>
+						</div>
+						<div class="password-row">
+							<input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" aria-describedby="passwordError" placeholder="••••••••">
+							<button type="button" class="toggle-pass" id="togglePass" aria-pressed="false" aria-label="Show password">Show</button>
+						</div>
+						<div id="passwordError" class="error" role="alert" aria-live="polite"></div>
+					</div>
+
+					<div class="row" style="align-items:center;justify-content:space-between;margin-top:6px">
+						<label class="remember"><input type="checkbox" id="remember" name="remember"> Remember me</label>
+						<div style="font-size:12px;color:var(--muted)">Need an account? <a href="#">Sign up</a></div>
+					</div>
+
+					<div class="actions">
+						<button type="submit" class="btn" id="submitBtn">Sign in</button>
+						<button type="button" class="secondary" id="demoBtn">Demo</button>
+					</div>
+
+					<div id="formStatus" class="hint" style="margin-top:12px" aria-live="polite"></div>
+				</form>
+			</section>
+		</main>
+
+		<script>
+			(function(){
+				const form = document.getElementById('loginForm');
+				const email = document.getElementById('email');
+				const password = document.getElementById('password');
+				const emailError = document.getElementById('emailError');
+				const passwordError = document.getElementById('passwordError');
+				const submitBtn = document.getElementById('submitBtn');
+				const formStatus = document.getElementById('formStatus');
+				const togglePass = document.getElementById('togglePass');
+				const demoBtn = document.getElementById('demoBtn');
+
+				function showError(el, msg){
+					el.textContent = msg || '';
+				}
+
+				function validateEmail(){
+					const v = email.value.trim();
+					if(!v){
+						showError(emailError, 'Email is required');
+						return false;
+					}
+					// basic email pattern
+					const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+					if(!re.test(v)){
+						showError(emailError, 'Enter a valid email address');
+						return false;
+					}
+					showError(emailError, '');
+					return true;
+				}
+
+				function validatePassword(){
+					const v = password.value;
+					if(!v){
+						showError(passwordError, 'Password is required');
+						return false;
+					}
+					if(v.length < 8){
+						showError(passwordError, 'Password must be at least 8 characters');
+						return false;
+					}
+					showError(passwordError, '');
+					return true;
+				}
+
+				email.addEventListener('input', validateEmail);
+				password.addEventListener('input', validatePassword);
+
+				togglePass.addEventListener('click', function(){
+					const isHidden = password.type === 'password';
+					password.type = isHidden ? 'text' : 'password';
+					togglePass.textContent = isHidden ? 'Hide' : 'Show';
+					togglePass.setAttribute('aria-pressed', String(isHidden));
+				});
+
+				demoBtn.addEventListener('click', function(){
+					email.value = 'demo@example.com';
+					password.value = 'password123';
+					validateEmail();
+					validatePassword();
+				});
+
+				form.addEventListener('submit', function(ev){
+					ev.preventDefault();
+					const ok1 = validateEmail();
+					const ok2 = validatePassword();
+					if(!ok1 || !ok2){
+						formStatus.textContent = 'Please fix the errors above.';
+						return;
+					}
+
+					// simulate async login
+					submitBtn.disabled = true;
+					const spinner = document.createElement('span');
+					spinner.className = 'spinner';
+					submitBtn.prepend(spinner);
+					submitBtn.textContent = 'Signing in';
+					submitBtn.appendChild(spinner);
+					formStatus.textContent = '';
+
+					// fake network delay
+					setTimeout(()=>{
+						// fake success if demo credentials used
+						const success = email.value === 'demo@example.com' && password.value === 'password123';
+						if(success){
+							formStatus.textContent = 'Signed in successfully — redirecting...';
+							// In real app: replace with location.href = '/dashboard' or similar
+							setTimeout(()=>{ formStatus.textContent = 'Redirected (demo).'; submitBtn.disabled = false; submitBtn.textContent = 'Sign in'; }, 800);
+						} else {
+							formStatus.textContent = 'Invalid email or password.';
+							submitBtn.disabled = false;
+							submitBtn.textContent = 'Sign in';
+						}
+						// remove spinners if any
+						const sp = submitBtn.querySelector('.spinner');
+						if(sp) sp.remove();
+					}, 900);
+				});
+			})();
+		</script>
+	</body>
+</html>
